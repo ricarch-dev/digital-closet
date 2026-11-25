@@ -15,4 +15,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "DigitalCloset"
-include(":composeApp", ":androidApp")
+include(":composeApp", ":androidApp", ":contracts", ":server")

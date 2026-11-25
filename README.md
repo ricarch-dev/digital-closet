@@ -1,8 +1,9 @@
 # Digital Closet — prototype
 
-This is an offline, in-memory **prototype**, not the connected MVP. It has sample garments,
-local garment entry, and a deterministic example outfit. Changes disappear when the app
-process is restarted. There are no accounts, persisted photos, backend, or deployment.
+The Android app remains an offline, in-memory **prototype**, not the connected MVP.
+It has sample garments, local garment entry, and a deterministic example outfit.
+Changes disappear when the app process is restarted. There are no accounts or
+persisted photos yet, and the app is not connected to the new API.
 
 ## Android
 
@@ -18,7 +19,16 @@ The shared Compose module declares iOS device and simulator targets on macOS.
 An Xcode host application and a macOS build/signing environment are still needed
 to run an iOS app; this Windows checkout cannot verify iOS.
 
+## API foundation
+
+`contracts` holds shared, serializable request and response DTOs. `server` is a
+Ktor/JVM application with only a health route so far. From a local machine with
+Gradle 9.6 and a JDK 17+ installation, run `gradle :contracts:serverTest
+:server:test` to check the contracts and HTTP route; run `gradle :server:run`
+to listen on `127.0.0.1:8080` (or set `PORT`). Both `GET /health` and
+`GET /api/v1/health` return `{"status":"ok"}`. This is not a deployed API.
+
 ## Next milestone
 
-Build the Ktor API, private image storage, server-side SQLite persistence,
-authentication, and real garment registration. Do not treat demo state as durable.
+Add authentication, private image storage, server-side SQLite persistence and
+real garment registration. Do not treat demo state as durable.
