@@ -24,7 +24,8 @@ to run an iOS app; this Windows checkout cannot verify iOS.
 `contracts` holds shared, serializable request and response DTOs. `server` is a
 Ktor/JVM application with only a health route so far. From a local machine with
 Gradle 9.6 and a JDK 17+ installation, run `gradle :contracts:serverTest
-:server:test` to check the contracts and HTTP route; run `gradle :server:run`
+:contracts:testAndroidHostTest :server:test` to check the contracts on JVM
+and Android plus the HTTP route; run `gradle :server:run`
 to listen on `127.0.0.1:8080` (or set `PORT`). Both `GET /health` and
 `GET /api/v1/health` return `{"status":"ok"}`. This is not a deployed API.
 

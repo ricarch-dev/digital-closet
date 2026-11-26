@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
@@ -9,8 +11,16 @@ kotlin {
         namespace = "dev.digitalcloset.contracts"
         compileSdk = 36
         minSdk = 26
+        withHostTest {}
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
     }
-    jvm("server")
+    jvm("server") {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_17)
+        }
+    }
 
     if (System.getProperty("os.name").startsWith("Mac")) {
         listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
