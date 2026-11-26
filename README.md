@@ -27,7 +27,8 @@ Gradle 9.6 and a JDK 17+ installation, run `gradle :contracts:serverTest
 :contracts:testAndroidHostTest :server:test` to check the contracts on JVM
 and Android plus the HTTP route; run `gradle :server:run`
 to listen on `127.0.0.1:8080` (or set `PORT`). Both `GET /health` and
-`GET /api/v1/health` return `{"status":"ok"}`. This is not a deployed API.
+`GET /api/v1/health` return `{"status":"ok"}`. An invalid `PORT` fails at
+startup instead of silently using 8080. This is not a deployed API.
 
 ## Next milestone
 

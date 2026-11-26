@@ -12,8 +12,14 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 
 fun main() {
-    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+    val port = serverPort(System.getenv("PORT"))
     embeddedServer(Netty, port = port, host = "127.0.0.1") { module() }.start(wait = true)
+}
+
+internal fun serverPort(configured: String?): Int {
+    if (configured == null) return 8080
+    return configured.toIntOrNull()?.takeIf { it in 1..65535 }
+        ?: throw IllegalArgumentException("PORT must be an integer between 1 and 65535")
 }
 
 fun Application.module() {
