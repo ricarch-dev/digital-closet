@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.ktor.serialization.json)
     implementation(libs.exposed.jdbc)
     implementation(libs.sqlite.jdbc)
+    implementation(libs.aws.s3)
 
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.ktor.server.test.host)

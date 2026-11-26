@@ -6,6 +6,12 @@ import dev.digitalcloset.server.auth.authRoutes
 import dev.digitalcloset.server.auth.profileRoutes
 import dev.digitalcloset.server.db.AuthStore
 import dev.digitalcloset.server.db.ClosetDatabase
+import dev.digitalcloset.server.db.GarmentStore
+import dev.digitalcloset.server.garments.garmentRoutes
+import dev.digitalcloset.server.media.PrivatePhotoStore
+import dev.digitalcloset.server.media.UnavailablePhotoStore
+import dev.digitalcloset.server.media.mediaRoutes
+import dev.digitalcloset.server.media.PhotoStorageUnavailable
 import dev.digitalcloset.contracts.ApiError
 import dev.digitalcloset.contracts.HealthResponse
 import io.ktor.server.auth.Authentication
@@ -47,8 +53,13 @@ fun Application.module() {
 }
 
 internal fun Application.module(settings: ServerSettings, database: ClosetDatabase) {
+    module(settings, database, UnavailablePhotoStore)
+}
+
+internal fun Application.module(settings: ServerSettings, database: ClosetDatabase, photos: PrivatePhotoStore) {
     val store = AuthStore(database.exposedDatabase)
     val sessions = AuthService(store, settings)
+    val garments = GarmentStore(database.exposedDatabase)
 
     install(ContentNegotiation) {
         json(Json { ignoreUnknownKeys = false })
@@ -56,6 +67,9 @@ internal fun Application.module(settings: ServerSettings, database: ClosetDataba
     install(StatusPages) {
         exception<BadRequestException> { call, _ ->
             call.respond(HttpStatusCode.BadRequest, ApiError("invalid_request", "Request body is invalid"))
+        }
+        exception<PhotoStorageUnavailable> { call, _ ->
+            call.respond(HttpStatusCode.ServiceUnavailable, ApiError("photo_storage_unavailable", "Private photo storage is not configured"))
         }
     }
     install(Authentication) {
@@ -84,6 +98,8 @@ internal fun Application.module(settings: ServerSettings, database: ClosetDataba
         authRoutes(sessions)
         authenticate("auth-jwt") {
             profileRoutes(store)
+            mediaRoutes(garments, photos)
+            garmentRoutes(garments, photos)
         }
     }
 }

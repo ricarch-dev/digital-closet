@@ -46,5 +46,5 @@ internal fun Route.profileRoutes(store: AuthStore) {
     }
 }
 
-private fun ApplicationCall.authenticatedUserId(): String? =
+internal fun ApplicationCall.authenticatedUserId(): String? =
     principal<JWTPrincipal>()?.payload?.subject?.takeIf(String::isNotBlank)

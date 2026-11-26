@@ -10,8 +10,10 @@ internal class ClosetDatabase private constructor(
     val exposedDatabase: Database,
 ) {
     companion object {
-        private const val MIGRATION_VERSION = 1
-        private const val MIGRATION_RESOURCE = "/db/migration/V1__auth_profile.sql"
+        private val migrations = listOf(
+            1 to "/db/migration/V1__auth_profile.sql",
+            2 to "/db/migration/V2__media_garments.sql",
+        )
 
         fun open(path: String): ClosetDatabase {
             Class.forName("org.sqlite.JDBC")
@@ -26,10 +28,6 @@ internal class ClosetDatabase private constructor(
         }
 
         private fun runMigrations(jdbcUrl: String, connectionProperties: java.util.Properties) {
-            val migration = ClosetDatabase::class.java.getResourceAsStream(MIGRATION_RESOURCE)
-                ?.bufferedReader()
-                ?.use { it.readText() }
-                ?: error("Database migration resource is missing")
             DriverManager.getConnection(jdbcUrl, connectionProperties).use { connection ->
                 connection.createStatement().use { statement ->
                     statement.execute(
@@ -41,35 +39,39 @@ internal class ClosetDatabase private constructor(
                         """.trimIndent(),
                     )
                 }
-                val alreadyApplied = connection.prepareStatement(
-                    "SELECT 1 FROM schema_migrations WHERE version = ?",
-                ).use { statement ->
-                    statement.setInt(1, MIGRATION_VERSION)
-                    statement.executeQuery().use { it.next() }
-                }
-                if (alreadyApplied) return
-
-                connection.autoCommit = false
-                try {
-                    migration.split(';')
-                        .map(String::trim)
-                        .filter(String::isNotEmpty)
-                        .forEach { sql ->
-                            connection.createStatement().use { it.execute(sql) }
-                        }
-                    connection.prepareStatement(
-                        "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
-                    ).use { statement ->
-                        statement.setInt(1, MIGRATION_VERSION)
-                        statement.setLong(2, System.currentTimeMillis())
-                        statement.executeUpdate()
+                val appliedVersions = connection.createStatement().use { statement ->
+                    statement.executeQuery("SELECT version FROM schema_migrations").use { rows ->
+                        buildSet { while (rows.next()) add(rows.getInt(1)) }
                     }
-                    connection.commit()
-                } catch (failure: Exception) {
-                    connection.rollback()
-                    throw failure
-                } finally {
-                    connection.autoCommit = true
+                }
+                for ((version, resource) in migrations) {
+                    if (version in appliedVersions) continue
+                    val migration = ClosetDatabase::class.java.getResourceAsStream(resource)
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        ?: error("Database migration resource is missing: $resource")
+                    connection.autoCommit = false
+                    try {
+                        migration.split(';')
+                            .map(String::trim)
+                            .filter(String::isNotEmpty)
+                            .forEach { sql ->
+                                connection.createStatement().use { it.execute(sql) }
+                            }
+                        connection.prepareStatement(
+                            "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
+                        ).use { statement ->
+                            statement.setInt(1, version)
+                            statement.setLong(2, System.currentTimeMillis())
+                            statement.executeUpdate()
+                        }
+                        connection.commit()
+                    } catch (failure: Exception) {
+                        connection.rollback()
+                        throw failure
+                    } finally {
+                        connection.autoCommit = true
+                    }
                 }
             }
         }
